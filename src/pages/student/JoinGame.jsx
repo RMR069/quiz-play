@@ -1,16 +1,41 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function JoinGame() {
+  const navigate = useNavigate();
+
   const [studentName, setStudentName] = useState("");
   const [gameCode, setGameCode] = useState("");
 
+  // Field-level errors
+  const [nameError, setNameError] = useState("");
+  const [codeError, setCodeError] = useState("");
+
   function handleJoin() {
-    if (!studentName || !gameCode) {
-      alert("Please enter your name and game code.");
-      return;
+    let hasError = false;
+
+    // Reset errors before validating
+    setNameError("");
+    setCodeError("");
+
+    const name = studentName.trim();
+    const code = gameCode.trim();
+
+    if (!name) {
+      setNameError("Please enter your name.");
+      hasError = true;
     }
 
-    alert(`Welcome ${studentName}! Joining game ${gameCode}`);
+    if (!code) {
+      setCodeError("Please enter the game code.");
+      hasError = true;
+    }
+
+    if (hasError) return;
+
+    navigate("/student/lobby", {
+      state: { studentName: name, gameCode: code },
+    });
   }
 
   return (
@@ -24,26 +49,48 @@ function JoinGame() {
           Enter your name and the game code to join the live quiz.
         </p>
 
+        {/* Student Name */}
         <div className="mb-4">
           <label className="block mb-2 text-sm text-slate-300">Student Name</label>
           <input
             type="text"
             placeholder="Enter your name"
             value={studentName}
-            onChange={(e) => setStudentName(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-500 text-white outline-none focus:ring-2 focus:ring-cyan-400"
+            onChange={(e) => {
+              setStudentName(e.target.value);
+              if (nameError) setNameError(""); // clear error while typing
+            }}
+            className={`w-full px-4 py-3 rounded-xl bg-slate-700 border text-white outline-none focus:ring-2 ${
+              nameError
+                ? "border-red-400 focus:ring-red-400"
+                : "border-slate-500 focus:ring-cyan-400"
+            }`}
           />
+          {nameError && (
+            <p className="mt-2 text-sm text-red-400">{nameError}</p>
+          )}
         </div>
 
+        {/* Game Code */}
         <div className="mb-6">
           <label className="block mb-2 text-sm text-slate-300">Game Code</label>
           <input
             type="text"
             placeholder="Enter game code"
             value={gameCode}
-            onChange={(e) => setGameCode(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-500 text-white outline-none focus:ring-2 focus:ring-cyan-400"
+            onChange={(e) => {
+              setGameCode(e.target.value);
+              if (codeError) setCodeError(""); // clear error while typing
+            }}
+            className={`w-full px-4 py-3 rounded-xl bg-slate-700 border text-white outline-none focus:ring-2 ${
+              codeError
+                ? "border-red-400 focus:ring-red-400"
+                : "border-slate-500 focus:ring-cyan-400"
+            }`}
           />
+          {codeError && (
+            <p className="mt-2 text-sm text-red-400">{codeError}</p>
+          )}
         </div>
 
         <button
