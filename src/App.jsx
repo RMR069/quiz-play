@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import Home from "./pages/Home";
 import JoinGame from "./pages/student/JoinGame";
 import Lobby from "./pages/student/Lobby";
@@ -9,7 +10,7 @@ import Dashboard from "./pages/instructor/Dashboard";
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/student/join" element={<JoinGame />} />
