@@ -1,235 +1,178 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 function SessionOfficial() {
-  // Generate a mock code once
-  const gameCode = useMemo(() => {
-    const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-    const nums = "23456789";
-    const pick = (s) => s[Math.floor(Math.random() * s.length)];
-    return `${pick(letters)}${pick(letters)}${pick(nums)}${pick(nums)}`;
-  }, []);
+  const navigate = useNavigate();
+  const { state } = useLocation();
 
-  const [status, setStatus] = useState("Waiting"); // Waiting | Live | Ended
-  const [players, setPlayers] = useState([
-    { name: "Sara", joinedAt: "00:02" },
-    { name: "Fahad", joinedAt: "00:06" },
-  ]);
+  // Guard: if the page is opened directly without setup data
+  if (!state?.gameCode) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
+        <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 shadow-sm text-center">
+          <h1 className="text-2xl font-bold text-slate-900 mb-3">
+            No session data found
+          </h1>
+          <p className="text-slate-500 mb-6">
+            Please go back to the setup page and create a session first.
+          </p>
+          <button
+            onClick={() => navigate("/instructor/dashboard-official")}
+            className="w-full px-5 py-3 rounded-2xl bg-slate-900 text-white hover:bg-slate-800 transition font-bold"
+          >
+            Back to Setup
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Prototype: auto-add players while Waiting
-  useEffect(() => {
-    if (status !== "Waiting") return;
+  const { gameCode, fileName, questionCount, timePerQuestion, studentsJoined } =
+    state;
 
-    const pool = ["Radi", "Nora", "Ali", "Hanan", "Omar"];
-    let i = 0;
+  // Prototype students list (will be realtime later)
+  const students =
+    studentsJoined > 0
+      ? ["Radi", "Sara", "Fahad"]
+      : [];
 
-    const id = setInterval(() => {
-      if (i >= pool.length) {
-        clearInterval(id);
-        return;
-      }
-      setPlayers((prev) => [...prev, { name: pool[i], joinedAt: `00:${10 + i * 2}` }]);
-      i += 1;
-    }, 2500);
+  function handleStartQuiz() {
+    if (students.length === 0) return;
 
-    return () => clearInterval(id);
-  }, [status]);
+    navigate("/instructor/live-official", {
+      state: {
+        gameCode,
+        fileName,
+        questionCount,
+        timePerQuestion,
+        students,
+      },
+    });
+  }
+
+  function handleBackToSetup() {
+    navigate("/instructor/dashboard-official");
+  }
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-72 min-h-screen bg-white border-r border-slate-200 p-6 hidden md:block">
-          <div className="mb-8">
-            <h1 className="text-xl font-bold">Quiz Play</h1>
-            <p className="text-sm text-slate-500 mt-1">Instructor Panel</p>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900">
+      <div className="max-w-6xl mx-auto px-6 py-10">
+        
 
-          <nav className="space-y-2">
-            <Link
-              to="/instructor/dashboard-official"
-              className="block px-4 py-3 rounded-xl hover:bg-slate-100 text-slate-700"
-            >
-              Dashboard
-            </Link>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Session Summary */}
+          <div className="xl:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
+            <h2 className="text-2xl font-bold mb-6">Session Summary</h2>
 
-            <Link
-              to="/instructor/session-official"
-              className="block px-4 py-3 rounded-xl bg-slate-900 text-white"
-            >
-              Sessions
-            </Link>
-
-            <div className="block px-4 py-3 rounded-xl text-slate-400 cursor-not-allowed">
-              Quizzes (soon)
-            </div>
-
-            <div className="block px-4 py-3 rounded-xl text-slate-400 cursor-not-allowed">
-              Analytics (soon)
-            </div>
-          </nav>
-
-          <div className="mt-10">
-            <Link
-              to="/"
-              className="block text-center px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50"
-            >
-              Back to Home
-            </Link>
-          </div>
-        </aside>
-
-        {/* Main */}
-        <main className="flex-1 p-6 md:p-10">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div>
-              <h2 className="text-2xl font-bold">Session</h2>
-              <p className="text-slate-500 mt-1">
-                Share this code with students and control the quiz.
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <Link
-                to="/instructor/session"
-                className="px-5 py-3 rounded-xl border border-slate-300 hover:bg-white transition"
-              >
-                Game Style View
-              </Link>
-              <Link
-                to="/instructor/dashboard-official"
-                className="px-5 py-3 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition"
-              >
-                Back to Dashboard
-              </Link>
-            </div>
-          </div>
-
-          {/* Code + status */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-white border border-slate-200 rounded-2xl p-6 md:col-span-2">
-              <p className="text-slate-500 text-sm">Game Code</p>
-              <div className="mt-2 flex items-center justify-between gap-3">
-                <div className="text-4xl font-black tracking-widest">{gameCode}</div>
-                <button
-                  onClick={() => navigator.clipboard.writeText(gameCode)}
-                  className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-50 transition"
-                >
-                  Copy
-                </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
+                  File Name
+                </p>
+                <p className="font-semibold text-slate-900 break-words">
+                  {fileName}
+                </p>
               </div>
-              <p className="text-slate-500 text-sm mt-3">
-                Students will join using this code.
-              </p>
-            </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-6">
-              <p className="text-slate-500 text-sm">Status</p>
-              <p className="text-2xl font-bold mt-2">{status}</p>
-              <p className="text-slate-500 text-sm mt-2">
-                {status === "Waiting"
-                  ? "Waiting for students..."
-                  : status === "Live"
-                  ? "Quiz is running."
-                  : "Session ended."}
-              </p>
+              <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
+                  Game Code
+                </p>
+                <p className="text-2xl font-extrabold tracking-[0.15em] text-slate-900">
+                  {gameCode}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
+                  Number of Questions
+                </p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {questionCount}
+                </p>
+              </div>
+
+              <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">
+                  Time per Question
+                </p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {timePerQuestion}s
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-8">
+          {/* Session Controls */}
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-7 shadow-sm">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+              Session Controls
+            </p>
+
+            <div className="mt-6 rounded-3xl bg-slate-50 border border-slate-200 p-5 mb-5">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                Students Joined
+              </p>
+
+              <div className="mt-3 flex items-end justify-between">
+                <p className="text-4xl font-extrabold text-slate-900">
+                  {students.length}
+                </p>
+                <p className="text-sm text-slate-500">
+                  {students.length === 1 ? "student" : "students"}
+                </p>
+              </div>
+            </div>
+
             <button
-              onClick={() => setStatus("Live")}
-              disabled={status !== "Waiting"}
+              onClick={handleStartQuiz}
+              disabled={students.length === 0}
               className={[
-                "px-5 py-3 rounded-xl font-semibold transition",
-                status === "Waiting"
+                "w-full px-5 py-3.5 rounded-2xl transition font-bold",
+                students.length > 0
                   ? "bg-slate-900 text-white hover:bg-slate-800"
                   : "bg-slate-200 text-slate-500 cursor-not-allowed",
               ].join(" ")}
             >
-              Start
+              Start Quiz
             </button>
 
             <button
-              onClick={() => alert("Prototype: Next question")}
-              disabled={status !== "Live"}
-              className={[
-                "px-5 py-3 rounded-xl font-semibold transition",
-                status === "Live"
-                  ? "bg-white border border-slate-300 hover:bg-slate-50"
-                  : "bg-slate-200 text-slate-500 cursor-not-allowed",
-              ].join(" ")}
+              onClick={handleBackToSetup}
+              className="w-full mt-3 px-5 py-3.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition font-semibold"
             >
-              Next
-            </button>
-
-            <button
-              onClick={() => setStatus("Ended")}
-              disabled={status === "Ended"}
-              className={[
-                "px-5 py-3 rounded-xl font-semibold transition",
-                status !== "Ended"
-                  ? "bg-red-500 text-white hover:bg-red-400"
-                  : "bg-slate-200 text-slate-500 cursor-not-allowed",
-              ].join(" ")}
-            >
-              End
+              Back to Setup
             </button>
           </div>
+        </div>
 
-          {/* Players table */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg">Players</h3>
-              <span className="text-slate-500 text-sm">{players.length} joined</span>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="text-slate-500 text-sm border-b border-slate-200">
-                    <th className="py-3 pr-3">Name</th>
-                    <th className="py-3 pr-3">Joined at</th>
-                    <th className="py-3 pr-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {players.map((p, idx) => (
-                    <tr key={`${p.name}-${idx}`} className="border-b border-slate-100">
-                      <td className="py-3 pr-3 font-medium">{p.name}</td>
-                      <td className="py-3 pr-3 text-slate-500">{p.joinedAt}</td>
-                      <td className="py-3 pr-3">
-                        <span className="inline-block px-3 py-1 rounded-full text-xs bg-slate-100 text-slate-600">
-                          Connected
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {/* Students Box */}
+        <div className="mt-6 bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-2xl font-bold">Joined Students</h2>
+            <span className="text-sm text-slate-500">
+              {students.length} {students.length === 1 ? "student" : "students"}
+            </span>
           </div>
 
-          {/* Mobile quick nav */}
-          <div className="md:hidden mt-8">
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex gap-3">
-              <Link
-                to="/instructor/dashboard-official"
-                className="flex-1 text-center px-4 py-3 rounded-xl border border-slate-300"
-              >
-                Dashboard
-              </Link>
-              <Link
-                to="/instructor/session-official"
-                className="flex-1 text-center px-4 py-3 rounded-xl bg-slate-900 text-white"
-              >
-                Sessions
-              </Link>
+          {students.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+              <p className="text-slate-500">No students joined yet.</p>
             </div>
-          </div>
-        </main>
+          ) : (
+            <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {students.map((student, index) => (
+                  <div
+                    key={`${student}-${index}`}
+                    className="rounded-2xl bg-white border border-slate-200 px-4 py-3"
+                  >
+                    <p className="font-medium text-slate-900">{student}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

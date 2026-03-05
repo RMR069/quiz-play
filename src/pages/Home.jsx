@@ -22,7 +22,7 @@ function Home() {
             </div>
           </Link>
 
-          <Link to="/instructor/dashboard">
+          <Link to="/instructor/dashboard-official">
             <div className="bg-slate-800 hover:bg-slate-700 transition rounded-2xl p-8 shadow-lg border border-slate-600 cursor-pointer">
               <h2 className="game-font text-3xl text-pink-300 mb-4">Instructor</h2>
               <p className="text-slate-300">
