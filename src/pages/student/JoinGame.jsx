@@ -7,14 +7,12 @@ function JoinGame() {
   const [studentName, setStudentName] = useState("");
   const [gameCode, setGameCode] = useState("");
 
-  // Field-level errors
   const [nameError, setNameError] = useState("");
   const [codeError, setCodeError] = useState("");
 
   function handleJoin() {
     let hasError = false;
 
-    // Reset errors before validating
     setNameError("");
     setCodeError("");
 
@@ -49,16 +47,17 @@ function JoinGame() {
           Enter your name and the game code to join the live quiz.
         </p>
 
-        {/* Student Name */}
         <div className="mb-4">
-          <label className="block mb-2 text-sm text-slate-300">Student Name</label>
+          <label className="block mb-2 text-sm text-slate-300">
+            Student Name
+          </label>
           <input
             type="text"
             placeholder="Enter your name"
             value={studentName}
             onChange={(e) => {
               setStudentName(e.target.value);
-              if (nameError) setNameError(""); // clear error while typing
+              if (nameError) setNameError("");
             }}
             className={`w-full px-4 py-3 rounded-xl bg-slate-700 border text-white outline-none focus:ring-2 ${
               nameError
@@ -66,12 +65,9 @@ function JoinGame() {
                 : "border-slate-500 focus:ring-cyan-400"
             }`}
           />
-          {nameError && (
-            <p className="mt-2 text-sm text-red-400">{nameError}</p>
-          )}
+          {nameError && <p className="mt-2 text-sm text-red-400">{nameError}</p>}
         </div>
 
-        {/* Game Code */}
         <div className="mb-6">
           <label className="block mb-2 text-sm text-slate-300">Game Code</label>
           <input
@@ -80,7 +76,7 @@ function JoinGame() {
             value={gameCode}
             onChange={(e) => {
               setGameCode(e.target.value);
-              if (codeError) setCodeError(""); // clear error while typing
+              if (codeError) setCodeError("");
             }}
             className={`w-full px-4 py-3 rounded-xl bg-slate-700 border text-white outline-none focus:ring-2 ${
               codeError
@@ -88,9 +84,7 @@ function JoinGame() {
                 : "border-slate-500 focus:ring-cyan-400"
             }`}
           />
-          {codeError && (
-            <p className="mt-2 text-sm text-red-400">{codeError}</p>
-          )}
+          {codeError && <p className="mt-2 text-sm text-red-400">{codeError}</p>}
         </div>
 
         <button

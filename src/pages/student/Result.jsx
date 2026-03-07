@@ -21,47 +21,73 @@ function Result() {
     );
   }
 
-  const { studentName, gameCode, score, total } = state;
-  const percent = Math.round((score / total) * 100);
+  const TOTAL_QUESTIONS = 3;
+
+  const lastPoints = state?.lastPoints ?? 0;
+  const totalPoints = state?.totalPoints ?? 0;
+  const currentIndex = state?.questionIndex ?? 0;
+
+  const nextIndex = currentIndex + 1;
+  const isFinished = nextIndex >= TOTAL_QUESTIONS;
+
+  const onNext = () => {
+    if (isFinished) {
+      navigate("/student/final-results", {
+        state: {
+          ...state,
+          totalPoints,
+          questionIndex: nextIndex,
+          totalQuestions: TOTAL_QUESTIONS,
+        },
+      });
+      return;
+    }
+
+    navigate("/student/difficulty", {
+      state: {
+        ...state,
+        questionIndex: nextIndex,
+        totalPoints,
+      },
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-6 py-10">
-      <div className="w-full max-w-2xl bg-slate-800 border border-slate-600 rounded-2xl shadow-xl p-8 text-center">
-        <h1 className="game-font text-4xl text-yellow-300 mb-4">Results</h1>
+    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-6">
+      <div className="w-full max-w-4xl bg-slate-800 border border-slate-600 rounded-2xl shadow-xl p-8">
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="game-font text-3xl text-cyan-300">Result</h1>
+            <p className="text-slate-300 mt-2">
+              Question {currentIndex + 1} / {TOTAL_QUESTIONS}
+            </p>
+          </div>
 
-        <p className="text-slate-300 mb-8">
-          Player: <span className="text-white font-semibold">{studentName}</span>{" "}
-          • Code: <span className="text-yellow-300 game-font">{gameCode}</span>
-        </p>
-
-        <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 mb-8">
-          <p className="text-slate-300">Your Score</p>
-          <p className="game-font text-6xl text-cyan-300 mt-2">
-            {score} / {total}
-          </p>
-          <p className="text-slate-300 mt-3">{percent}%</p>
+          <div className="bg-slate-900 border border-slate-600 rounded-2xl px-5 py-4 text-center">
+            <p className="text-slate-300 text-sm">Total Score</p>
+            <p className="game-font text-3xl text-yellow-300 mt-1">{totalPoints}</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 flex flex-col items-center justify-center">
+          <div className="w-56 h-56 rounded-full bg-emerald-400 shadow-2xl flex items-center justify-center">
+            <span className="game-font text-6xl text-white">+{lastPoints}</span>
+          </div>
+
+          <h2 className="game-font text-5xl mt-6">Good Job!</h2>
+
           <button
-            onClick={() => navigate("/student/join")}
-            className="w-full game-font bg-cyan-500 hover:bg-cyan-400 text-slate-900 py-3 rounded-xl transition"
+            onClick={onNext}
+            className="w-full mt-8 game-font bg-yellow-300 hover:bg-yellow-200 text-slate-900 py-3 rounded-xl transition"
           >
-            Play Again
+            {isFinished ? "Finish Quiz" : "Next Question"}
           </button>
 
           <button
-            onClick={() => navigate("/student/leaderboard", { state })}
-            className="w-full game-font bg-yellow-300 hover:bg-yellow-200 text-slate-900 py-3 rounded-xl transition"
+            onClick={() => navigate("/student/lobby", { state })}
+            className="w-full mt-3 bg-transparent border border-slate-600 hover:bg-slate-700 py-3 rounded-xl transition"
           >
-            View Leaderboard
-          </button>
-
-          <button
-            onClick={() => navigate("/")}
-            className="w-full bg-transparent border border-slate-600 hover:bg-slate-700 py-3 rounded-xl transition"
-          >
-            Back to Home
+            Back to Lobby
           </button>
         </div>
       </div>

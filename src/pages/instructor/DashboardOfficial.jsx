@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 function DashboardOfficial() {
   const navigate = useNavigate();
 
-  // Generate a fixed game code once when the page loads
   const gameCode = useMemo(() => {
     const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
     const nums = "23456789";
@@ -16,7 +15,6 @@ function DashboardOfficial() {
   const [questionCount, setQuestionCount] = useState(5);
   const [timePerQuestion, setTimePerQuestion] = useState(5);
 
-  // Prototype joined students count (will become realtime later)
   const studentsJoined = 3;
 
   const MIN_QUESTIONS = 5;
@@ -41,8 +39,48 @@ function DashboardOfficial() {
     setTimePerQuestion((prev) => Math.max(prev - 5, MIN_TIME));
   }
 
+  // ✅ Mock AI: creates N questions per difficulty
+  function generateMockQuestions(n, fileName) {
+    const topic = fileName ? fileName.replace(/\.[^/.]+$/, "") : "General";
+
+    const make = (difficultyLabel, baseQ) =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `${difficultyLabel.toLowerCase()}-${i + 1}`,
+        difficulty: difficultyLabel.toLowerCase(),
+        q: `[${topic}] ${difficultyLabel} Q${i + 1}: ${baseQ} (${i + 1})`,
+        choices: ["A", "B", "C", "D"],
+        correctIndex: (i + 1) % 4, // deterministic
+      }));
+
+    return {
+      easy: make("Easy", "Basic concept question"),
+      medium: make("Medium", "Applied concept question"),
+      hard: make("Hard", "Challenging concept question"),
+    };
+  }
+
   function handleGoToSession() {
     if (!selectedFile) return;
+
+    // ✅ Create banks (Mock AI)
+    const questionsByDifficulty = generateMockQuestions(
+      questionCount,
+      selectedFile?.name
+    );
+
+    // ✅ Save instructor config so student reads the same questionCount/time/questions
+    const sessionConfig = {
+      gameCode,
+      questionCount,
+      timePerQuestion,
+      players: ["Radi", "Sara", "Fahad"], // temporary (later realtime)
+      questionsByDifficulty,
+    };
+
+    localStorage.setItem(
+      `quizplay_session_${gameCode}`,
+      JSON.stringify(sessionConfig)
+    );
 
     navigate("/instructor/session-official", {
       state: {
@@ -59,11 +97,9 @@ function DashboardOfficial() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900">
       <div className="max-w-6xl mx-auto px-6 py-10">
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Quiz Setup */}
           <div className="xl:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
             <h2 className="text-2xl font-bold mb-6">Quiz Setup</h2>
 
-            {/* Upload file */}
             <div className="mb-8">
               <p className="text-sm font-semibold mb-3 text-slate-700">
                 Upload File
@@ -100,9 +136,7 @@ function DashboardOfficial() {
               </label>
             </div>
 
-            {/* Setup controls */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {/* Number of questions */}
               <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
                 <p className="text-sm font-semibold text-slate-700 mb-2">
                   Number of Questions
@@ -132,12 +166,10 @@ function DashboardOfficial() {
                 </div>
               </div>
 
-              {/* Time per question */}
               <div className="rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
                 <p className="text-sm font-semibold text-slate-700 mb-2">
                   Time per Question
                 </p>
-                
 
                 <div className="flex items-center justify-between gap-3">
                   <button
@@ -165,7 +197,6 @@ function DashboardOfficial() {
             </div>
           </div>
 
-          {/* Session Info */}
           <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-7 shadow-sm">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
               Session Info
@@ -209,8 +240,8 @@ function DashboardOfficial() {
             </button>
 
             <p className="text-xs text-slate-500 mt-4 leading-5">
-              Student names will appear in the Session page before the quiz
-              starts.
+              This will generate 3 difficulty banks (Mock AI) and save session
+              settings for students.
             </p>
           </div>
         </div>
