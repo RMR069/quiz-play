@@ -4,7 +4,6 @@ function SessionOfficial() {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  // Guard: if the page is opened directly without setup data
   if (!state?.gameCode) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
@@ -26,12 +25,26 @@ function SessionOfficial() {
     );
   }
 
-  const { gameCode, fileName, questionCount, timePerQuestion, studentsJoined } =
-    state;
+  const {
+    gameCode,
+    fileName: fileNameFromState,
+    questionCount: questionCountFromState,
+    timePerQuestion: timePerQuestionFromState,
+    studentsJoined,
+  } = state;
 
-  // Prototype students list (will be realtime later)
+  const raw = localStorage.getItem(`quizplay_session_${gameCode}`);
+  const session = raw ? JSON.parse(raw) : null;
+
+  const fileName = fileNameFromState ?? session?.fileName ?? "No file uploaded";
+  const questionCount = questionCountFromState ?? session?.questionCount ?? 5;
+  const timePerQuestion =
+    timePerQuestionFromState ?? session?.timePerQuestion ?? 5;
+
   const students =
-    studentsJoined > 0
+    session?.players?.length
+      ? session.players
+      : studentsJoined > 0
       ? ["Radi", "Sara", "Fahad"]
       : [];
 
@@ -56,8 +69,6 @@ function SessionOfficial() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900">
       <div className="max-w-6xl mx-auto px-6 py-10">
-        
-
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Session Summary */}
           <div className="xl:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
@@ -137,6 +148,17 @@ function SessionOfficial() {
             </button>
 
             <button
+              onClick={() =>
+                navigate("/instructor/questions-preview", {
+                  state: { ...state, gameCode },
+                })
+              }
+              className="w-full mt-3 px-5 py-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 transition font-semibold"
+            >
+              Preview Questions
+            </button>
+
+            <button
               onClick={handleBackToSetup}
               className="w-full mt-3 px-5 py-3.5 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 transition font-semibold"
             >
@@ -173,6 +195,8 @@ function SessionOfficial() {
             </div>
           )}
         </div>
+
+        
       </div>
     </div>
   );

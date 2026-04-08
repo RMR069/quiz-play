@@ -36,6 +36,7 @@ function Difficulty() {
 
   if (totalAnswered >= totalQuestions) return null;
 
+
   const goToQuestion = (difficulty, points) => {
     navigate("/student/question", {
       state: {

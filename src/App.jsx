@@ -10,6 +10,7 @@ import FinalResults from "./pages/student/FinalResults";
 
 import DashboardOfficial from "./pages/instructor/DashboardOfficial";
 import SessionOfficial from "./pages/instructor/SessionOfficial";
+import QuestionsPreview from "./pages/instructor/questions-preview";  
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         {/* Instructor routes */}
         <Route path="/instructor/dashboard-official" element={<DashboardOfficial />} />
         <Route path="/instructor/session-official" element={<SessionOfficial />} />
+        <Route path="/instructor/questions-preview" element={<QuestionsPreview />} />
       </Routes>
     </BrowserRouter>
   );
