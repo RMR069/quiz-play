@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Home from "./pages/Home";
+import CreateSession from "./pages/CreateSession";
+
 import JoinGame from "./pages/student/JoinGame";
 import Lobby from "./pages/student/Lobby";
 import Difficulty from "./pages/student/Difficulty";
@@ -10,7 +12,7 @@ import FinalResults from "./pages/student/FinalResults";
 
 import DashboardOfficial from "./pages/instructor/DashboardOfficial";
 import SessionOfficial from "./pages/instructor/SessionOfficial";
-import QuestionsPreview from "./pages/instructor/questions-preview";  
+import QuestionsPreview from "./pages/instructor/questions-preview";
 
 function App() {
   return (
@@ -30,6 +32,7 @@ function App() {
         <Route path="/instructor/dashboard-official" element={<DashboardOfficial />} />
         <Route path="/instructor/session-official" element={<SessionOfficial />} />
         <Route path="/instructor/questions-preview" element={<QuestionsPreview />} />
+        <Route path="/instructor/create-session" element={<CreateSession />} />
       </Routes>
     </BrowserRouter>
   );
