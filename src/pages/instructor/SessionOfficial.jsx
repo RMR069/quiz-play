@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
@@ -19,17 +19,35 @@ function SessionOfficial() {
   const [authError, setAuthError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  function readLocalSession() {
-    if (!localSessionKey) return null;
+  const fallbackSession = useMemo(() => {
+    if (gameCode && localSessionKey) {
+      try {
+        const raw = localStorage.getItem(localSessionKey);
+        const parsed = raw ? JSON.parse(raw) : null;
 
-    try {
-      const raw = localStorage.getItem(localSessionKey);
-      return raw ? JSON.parse(raw) : null;
-    } catch (error) {
-      console.error("Failed to read local session:", error);
+        if (parsed) {
+          return parsed;
+        }
+      } catch (error) {
+        console.error("Failed to read local session:", error);
+      }
+    }
+
+    if (!state || !gameCode) {
       return null;
     }
-  }
+
+    return {
+      gameCode,
+      fileName: state.fileName,
+      questionCount: state.questionCount,
+      timePerQuestion: state.timePerQuestion,
+      players: state.students || [],
+      questionsByDifficulty: state.questionsByDifficulty,
+      isGuest: state.isGuest ?? false,
+      localOnly: state.localOnly ?? false,
+    };
+  }, [gameCode, localSessionKey, state]);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
@@ -64,24 +82,8 @@ function SessionOfficial() {
 
   useEffect(() => {
     if (!gameCode) {
-      setLoading(false);
       return;
     }
-
-    const fallbackSession =
-      readLocalSession() ||
-      (state
-        ? {
-            gameCode,
-            fileName: state.fileName,
-            questionCount: state.questionCount,
-            timePerQuestion: state.timePerQuestion,
-            players: state.students || [],
-            questionsByDifficulty: state.questionsByDifficulty,
-            isGuest: state.isGuest ?? false,
-            localOnly: state.localOnly ?? false,
-          }
-        : null);
 
     const sessionRef = doc(db, "sessions", gameCode);
 
@@ -105,9 +107,12 @@ function SessionOfficial() {
     );
 
     return () => unsubscribeSession();
-  }, [gameCode, localSessionKey, state]);
+  }, [fallbackSession, gameCode]);
 
-  if (!gameCode) {
+  const isMissingGameCode = !gameCode;
+  const isPageLoading = !isMissingGameCode && loading;
+
+  if (isMissingGameCode) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
         <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-8 shadow-sm text-center">
@@ -128,7 +133,7 @@ function SessionOfficial() {
     );
   }
 
-  if (loading) {
+  if (isPageLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center px-6">
         <div className="text-slate-700 text-xl font-semibold">
