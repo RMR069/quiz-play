@@ -13,6 +13,8 @@ import FinalResults from "./pages/student/FinalResults";
 import DashboardOfficial from "./pages/instructor/DashboardOfficial";
 import SessionOfficial from "./pages/instructor/SessionOfficial";
 import QuestionsPreview from "./pages/instructor/questions-preview";
+import LoginTeacher from "./pages/instructor/LoginTeacher";
+import RegisterTeacher from "./pages/instructor/RegisterTeacher";
 
 function App() {
   return (
@@ -20,7 +22,6 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        {/* Student routes */}
         <Route path="/student/join" element={<JoinGame />} />
         <Route path="/student/lobby" element={<Lobby />} />
         <Route path="/student/difficulty" element={<Difficulty />} />
@@ -28,7 +29,8 @@ function App() {
         <Route path="/student/result" element={<Result />} />
         <Route path="/student/final-results" element={<FinalResults />} />
 
-        {/* Instructor routes */}
+        <Route path="/instructor/login" element={<LoginTeacher />} />
+        <Route path="/instructor/register" element={<RegisterTeacher />} />
         <Route path="/instructor/dashboard-official" element={<DashboardOfficial />} />
         <Route path="/instructor/session-official" element={<SessionOfficial />} />
         <Route path="/instructor/questions-preview" element={<QuestionsPreview />} />
