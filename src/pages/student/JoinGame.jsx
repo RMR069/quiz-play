@@ -1,15 +1,24 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { doc, getDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "../../firebase";
 
 function JoinGame() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [studentName, setStudentName] = useState("");
   const [gameCode, setGameCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const codeFromUrl = searchParams.get("code")?.trim().toUpperCase() || "";
+
+    if (codeFromUrl) {
+      setGameCode(codeFromUrl);
+    }
+  }, [searchParams]);
 
   const handleJoin = async (e) => {
     e.preventDefault();

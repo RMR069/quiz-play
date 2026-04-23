@@ -114,26 +114,42 @@ function DashboardOfficial() {
 
       const user = auth.currentUser;
 
-      if (user) {
-        await setDoc(doc(db, "sessions", gameCode), {
-          gameCode,
-          fileName: selectedFile.name,
-          questionCount,
-          timePerQuestion,
-          players: [],
-          questionsByDifficulty,
-          status: "waiting",
-          createdAt: serverTimestamp(),
-          ownerUid: user.uid,
-          ownerEmail: user.email,
-          ownerName: teacherName || "Instructor",
-          isGuest: false,
-        });
+      await setDoc(doc(db, "sessions", gameCode), {
+        gameCode,
+        fileName: selectedFile.name,
+        questionCount,
+        timePerQuestion,
+        players: [],
+        questionsByDifficulty,
+        status: "waiting",
+        createdAt: serverTimestamp(),
+        ownerUid: user?.uid ?? null,
+        ownerEmail: user?.email ?? null,
+        ownerName: teacherName || "Instructor",
+        isGuest: !user,
+      });
 
+      if (user) {
         setInfoMessage("Session saved successfully.");
       } else {
+        localStorage.setItem(
+          `quizplay_session_${gameCode}`,
+          JSON.stringify({
+            gameCode,
+            fileName: selectedFile.name,
+            questionCount,
+            timePerQuestion,
+            players: [],
+            questionsByDifficulty,
+            status: "waiting",
+            ownerName: teacherName || "Instructor",
+            isGuest: true,
+            localOnly: true,
+          })
+        );
+
         setInfoMessage(
-          "Guest mode: session is not saved. Log in if you want your work to be saved."
+          "Guest mode: session created successfully. Log in if you want ownership and saved instructor history."
         );
       }
 
@@ -146,6 +162,7 @@ function DashboardOfficial() {
           studentsJoined: 0,
           questionsByDifficulty,
           isGuest: !user,
+          localOnly: false,
         },
       });
     } catch (err) {
@@ -404,8 +421,8 @@ function DashboardOfficial() {
             </button>
 
             <p className="text-xs text-slate-500 mt-4 leading-5">
-              This will generate 3 difficulty banks. Saving to Firebase happens
-              only when the instructor is logged in.
+              This will generate 3 difficulty banks and create a joinable
+              session code for students.
             </p>
           </div>
         </div>

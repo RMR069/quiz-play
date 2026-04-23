@@ -9,6 +9,7 @@ function SessionOfficial() {
   const { state } = useLocation();
 
   const gameCode = state?.gameCode || "";
+  const localSessionKey = gameCode ? `quizplay_session_${gameCode}` : "";
   const [sessionData, setSessionData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copyMessage, setCopyMessage] = useState("");
@@ -17,6 +18,18 @@ function SessionOfficial() {
   const [teacherEmail, setTeacherEmail] = useState("");
   const [authError, setAuthError] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+
+  function readLocalSession() {
+    if (!localSessionKey) return null;
+
+    try {
+      const raw = localStorage.getItem(localSessionKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      console.error("Failed to read local session:", error);
+      return null;
+    }
+  }
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
@@ -50,7 +63,25 @@ function SessionOfficial() {
   }, []);
 
   useEffect(() => {
-    if (!gameCode) return;
+    if (!gameCode) {
+      setLoading(false);
+      return;
+    }
+
+    const fallbackSession =
+      readLocalSession() ||
+      (state
+        ? {
+            gameCode,
+            fileName: state.fileName,
+            questionCount: state.questionCount,
+            timePerQuestion: state.timePerQuestion,
+            players: state.students || [],
+            questionsByDifficulty: state.questionsByDifficulty,
+            isGuest: state.isGuest ?? false,
+            localOnly: state.localOnly ?? false,
+          }
+        : null);
 
     const sessionRef = doc(db, "sessions", gameCode);
 
@@ -59,6 +90,8 @@ function SessionOfficial() {
       (snapshot) => {
         if (snapshot.exists()) {
           setSessionData(snapshot.data());
+        } else if (fallbackSession) {
+          setSessionData(fallbackSession);
         } else {
           setSessionData(null);
         }
@@ -66,12 +99,13 @@ function SessionOfficial() {
       },
       (error) => {
         console.error("Error reading session:", error);
+        setSessionData(fallbackSession);
         setLoading(false);
       }
     );
 
     return () => unsubscribeSession();
-  }, [gameCode]);
+  }, [gameCode, localSessionKey, state]);
 
   if (!gameCode) {
     return (
@@ -129,6 +163,7 @@ function SessionOfficial() {
   const questionCount = sessionData.questionCount ?? 5;
   const timePerQuestion = sessionData.timePerQuestion ?? 5;
   const students = Array.isArray(sessionData.players) ? sessionData.players : [];
+  const isLocalOnlySession = Boolean(sessionData.localOnly);
   const joinUrl = `${window.location.origin}${import.meta.env.BASE_URL}student/join?code=${gameCode}`;
 
   const displayName = teacherName || "Guest";
@@ -244,6 +279,12 @@ function SessionOfficial() {
         {!isLoggedIn && (
           <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4 text-amber-800">
             You are using guest mode. Your work will not be saved unless you log in.
+          </div>
+        )}
+
+        {isLocalOnlySession && (
+          <div className="mb-6 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 text-cyan-900">
+            This session is running from local temporary data, not Firebase. To make it available across devices, create it while logged in.
           </div>
         )}
 

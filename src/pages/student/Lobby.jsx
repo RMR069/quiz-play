@@ -41,7 +41,7 @@ function Lobby() {
         gameCode,
         totalQuestions,
         timePerQuestion,
-        players, // نفس أسماء الاختبار
+        players, // Keep the same player list for the quiz
         totalPoints: 0,
         totalAnswered: 0,
         usedCounts: { easy: 0, medium: 0, hard: 0 },
