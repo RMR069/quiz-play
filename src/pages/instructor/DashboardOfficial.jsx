@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 
 function DashboardOfficial() {
   const navigate = useNavigate();
@@ -14,8 +16,10 @@ function DashboardOfficial() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [questionCount, setQuestionCount] = useState(5);
   const [timePerQuestion, setTimePerQuestion] = useState(5);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [error, setError] = useState("");
 
-  const studentsJoined = 3;
+  const studentsJoined = 0;
 
   const MIN_QUESTIONS = 5;
   const MAX_QUESTIONS = 20;
@@ -39,7 +43,6 @@ function DashboardOfficial() {
     setTimePerQuestion((prev) => Math.max(prev - 5, MIN_TIME));
   }
 
-  // ✅ Mock AI: creates N questions per difficulty
   function generateMockQuestions(n, fileName) {
     const topic = fileName ? fileName.replace(/\.[^/.]+$/, "") : "General";
 
@@ -49,7 +52,7 @@ function DashboardOfficial() {
         difficulty: difficultyLabel.toLowerCase(),
         q: `[${topic}] ${difficultyLabel} Q${i + 1}: ${baseQ} (${i + 1})`,
         choices: ["A", "B", "C", "D"],
-        correctIndex: (i + 1) % 4, // deterministic
+        correctIndex: (i + 1) % 4,
       }));
 
     return {
@@ -59,38 +62,44 @@ function DashboardOfficial() {
     };
   }
 
-  function handleGoToSession() {
+  async function handleGoToSession() {
     if (!selectedFile) return;
 
-    // ✅ Create banks (Mock AI)
-    const questionsByDifficulty = generateMockQuestions(
-      questionCount,
-      selectedFile?.name
-    );
+    try {
+      setIsCreatingSession(true);
+      setError("");
 
-    // ✅ Save instructor config so student reads the same questionCount/time/questions
-    const sessionConfig = {
-      gameCode,
-      questionCount,
-      timePerQuestion,
-      players: ["Radi", "Sara", "Fahad"], // temporary (later realtime)
-      questionsByDifficulty,
-    };
+      const questionsByDifficulty = generateMockQuestions(
+        questionCount,
+        selectedFile?.name
+      );
 
-    localStorage.setItem(
-      `quizplay_session_${gameCode}`,
-      JSON.stringify(sessionConfig)
-    );
-
-    navigate("/instructor/session-official", {
-      state: {
+      await setDoc(doc(db, "sessions", gameCode), {
         gameCode,
-        fileName: selectedFile ? selectedFile.name : "No file uploaded",
+        fileName: selectedFile.name,
         questionCount,
         timePerQuestion,
-        studentsJoined,
-      },
-    });
+        players: [],
+        questionsByDifficulty,
+        status: "waiting",
+        createdAt: serverTimestamp(),
+      });
+
+      navigate("/instructor/session-official", {
+        state: {
+          gameCode,
+          fileName: selectedFile.name,
+          questionCount,
+          timePerQuestion,
+          studentsJoined: 0,
+        },
+      });
+    } catch (err) {
+      console.error("Error creating session:", err);
+      setError(`Failed to create session: ${err.message}`);
+    } finally {
+      setIsCreatingSession(false);
+    }
   }
 
   return (
@@ -195,6 +204,10 @@ function DashboardOfficial() {
                 </div>
               </div>
             </div>
+
+            {error && (
+              <p className="mt-5 text-sm text-red-500 break-words">{error}</p>
+            )}
           </div>
 
           <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-7 shadow-sm">
@@ -228,15 +241,15 @@ function DashboardOfficial() {
 
             <button
               onClick={handleGoToSession}
-              disabled={!selectedFile}
+              disabled={!selectedFile || isCreatingSession}
               className={[
                 "w-full px-5 py-3.5 rounded-2xl transition font-bold",
-                selectedFile
+                selectedFile && !isCreatingSession
                   ? "bg-slate-900 text-white hover:bg-slate-800"
                   : "bg-slate-200 text-slate-500 cursor-not-allowed",
               ].join(" ")}
             >
-              Go to Session
+              {isCreatingSession ? "Creating Session..." : "Go to Session"}
             </button>
 
             <p className="text-xs text-slate-500 mt-4 leading-5">
