@@ -10,6 +10,7 @@ function SessionOfficial() {
   const gameCode = state?.gameCode || "";
   const [sessionData, setSessionData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [copyMessage, setCopyMessage] = useState("");
 
   useEffect(() => {
     if (!gameCode) return;
@@ -90,6 +91,39 @@ function SessionOfficial() {
   const timePerQuestion = sessionData.timePerQuestion ?? 5;
   const students = Array.isArray(sessionData.players) ? sessionData.players : [];
 
+  const joinUrl = `${window.location.origin}${import.meta.env.BASE_URL}student/join?code=${gameCode}`;
+
+  async function handleCopyLink() {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(joinUrl);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = joinUrl;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        const successful = document.execCommand("copy");
+        document.body.removeChild(textArea);
+
+        if (!successful) {
+          throw new Error("Fallback copy failed");
+        }
+      }
+
+      setCopyMessage("Link copied!");
+      setTimeout(() => setCopyMessage(""), 2000);
+    } catch (error) {
+      console.error("Failed to copy link:", error);
+      setCopyMessage("Copy failed. Copy the link manually.");
+      setTimeout(() => setCopyMessage(""), 2500);
+    }
+  }
+
   function handleStartQuiz() {
     if (students.length === 0) return;
 
@@ -152,16 +186,27 @@ function SessionOfficial() {
                 </p>
               </div>
 
-              <div className="md:col-span-2 rounded-3xl border border-slate-200 bg-slate-50/80 p-5 text-center">
-                <p className="text-xs uppercase tracking-wide text-slate-500 mb-3">
-                  Session Code
+              <div className="md:col-span-2 rounded-3xl border border-slate-200 bg-slate-50/80 p-5">
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-3 text-center">
+                  Join Link
                 </p>
-                <p className="text-5xl font-extrabold tracking-[0.2em] text-slate-900">
-                  {gameCode}
-                </p>
-                <p className="text-sm text-slate-500 mt-3">
-                  Share this code with students to join the session.
-                </p>
+
+                <div className="rounded-2xl bg-white border border-slate-200 p-4 break-all text-sm text-slate-700">
+                  {joinUrl}
+                </div>
+
+                <button
+                  onClick={handleCopyLink}
+                  className="mt-4 w-full md:w-auto px-5 py-3 rounded-2xl bg-slate-900 text-white hover:bg-slate-800 transition font-semibold"
+                >
+                  Copy Join Link
+                </button>
+
+                {copyMessage && (
+                  <p className="mt-3 text-sm text-green-600 font-medium">
+                    {copyMessage}
+                  </p>
+                )}
               </div>
             </div>
           </div>
