@@ -109,6 +109,24 @@ function SessionOfficial() {
     return () => unsubscribeSession();
   }, [fallbackSession, gameCode]);
 
+  useEffect(() => {
+    if (!gameCode || !sessionData) {
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        `quizplay_session_${gameCode}`,
+        JSON.stringify({
+          ...sessionData,
+          gameCode,
+        })
+      );
+    } catch (error) {
+      console.error("Failed to sync session locally:", error);
+    }
+  }, [gameCode, sessionData]);
+
   const isMissingGameCode = !gameCode;
   const isPageLoading = !isMissingGameCode && loading;
 
@@ -207,6 +225,19 @@ function SessionOfficial() {
         questionCount,
         timePerQuestion,
         students,
+      },
+    });
+  }
+
+  function handleManageQuestions() {
+    navigate("/instructor/questions-preview", {
+      state: {
+        gameCode,
+        fileName,
+        questionCount,
+        timePerQuestion,
+        students,
+        fromSession: true,
       },
     });
   }
@@ -364,6 +395,27 @@ function SessionOfficial() {
                     Back to Setup
                   </button>
                 </div>
+
+                <button
+                  onClick={handleManageQuestions}
+                  className="mt-4 w-full flex items-center justify-center gap-3 px-5 py-3 rounded-2xl border border-cyan-200 bg-cyan-50 text-cyan-900 hover:bg-cyan-100 transition font-semibold"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
+                    <path d="M4 4h16v16H4z" />
+                  </svg>
+                  Add or Edit Questions Manually
+                </button>
 
                 {copyMessage && (
                   <p className="mt-3 text-sm text-green-600 font-medium">
