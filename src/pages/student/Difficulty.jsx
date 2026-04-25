@@ -4,8 +4,19 @@ import { useLocation, useNavigate } from "react-router-dom";
 function Difficulty() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const hasSessionData = Boolean(state?.studentName && state?.gameCode);
+  const totalQuestions = state?.totalQuestions ?? 3;
+  const timePerQuestion = state?.timePerQuestion ?? 15;
+  const totalAnswered = state?.totalAnswered ?? 0;
+  const totalPoints = state?.totalPoints ?? 0;
 
-  if (!state?.studentName || !state?.gameCode) {
+  useEffect(() => {
+    if (hasSessionData && totalAnswered >= totalQuestions) {
+      navigate("/student/final-results", { state });
+    }
+  }, [hasSessionData, navigate, state, totalAnswered, totalQuestions]);
+
+  if (!hasSessionData) {
     return (
       <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-6">
         <div className="w-full max-w-md bg-slate-800 border border-slate-600 rounded-2xl shadow-xl p-8 text-center">
@@ -22,20 +33,7 @@ function Difficulty() {
     );
   }
 
-  const totalQuestions = state.totalQuestions ?? 3;
-  const timePerQuestion = state.timePerQuestion ?? 15;
-
-  const totalAnswered = state.totalAnswered ?? 0;
-  const totalPoints = state.totalPoints ?? 0;
-
-  useEffect(() => {
-    if (totalAnswered >= totalQuestions) {
-      navigate("/student/final-results", { state });
-    }
-  }, [totalAnswered, totalQuestions, navigate, state]);
-
   if (totalAnswered >= totalQuestions) return null;
-
 
   const goToQuestion = (difficulty, points) => {
     navigate("/student/question", {

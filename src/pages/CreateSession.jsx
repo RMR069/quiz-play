@@ -1,111 +1,77 @@
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { doc, serverTimestamp, setDoc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
-
-function generateGameCode() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
-}
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 function CreateSession() {
-  const navigate = useNavigate();
-  const { state } = useLocation();
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [gameCode] = useState(generateGameCode());
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const handleCreateSession = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
-  const fileName = state?.fileName ?? "No file uploaded";
-  const questionCount = state?.questionCount ?? 5;
-  const timePerQuestion = state?.timePerQuestion ?? 5;
-
-  async function handleCreateSession() {
     try {
-      setIsCreating(true);
-      setError("");
-      setSuccess("");
+      const user = auth.currentUser;
 
-      const sessionRef = doc(db, "sessions", gameCode);
-
-      await setDoc(sessionRef, {
-        gameCode,
-        fileName,
-        questionCount,
-        timePerQuestion,
-        players: [],
-        status: "waiting",
+      const sessionData = {
+        title,
         createdAt: serverTimestamp(),
-      });
+      };
 
-      const sessionSnap = await getDoc(sessionRef);
+      if (user) {
+        await addDoc(collection(db, "sessions"), {
+          ...sessionData,
+          ownerUid: user.uid,
+          ownerEmail: user.email,
+          isGuest: false,
+        });
 
-      if (!sessionSnap.exists()) {
-        throw new Error("Session was not saved in Firestore.");
+        setMessage("Session created and saved to Firebase.");
+      } else {
+        setMessage("Session created locally only. Login to save your work.");
       }
 
-      setSuccess(`Session created successfully: ${gameCode}`);
-
-      setTimeout(() => {
-        navigate("/instructor/session-official", {
-          state: {
-            gameCode,
-            fileName,
-            questionCount,
-            timePerQuestion,
-          },
-        });
-      }, 1200);
-    } catch (err) {
-      console.error("Error creating session:", err);
-      setError(`Failed to create session: ${err.message}`);
+      setTitle("");
+    } catch (error) {
+      console.error("Create session error:", error);
+      setMessage("Something went wrong while creating the session.");
     } finally {
-      setIsCreating(false);
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-xl bg-slate-800 rounded-2xl p-8 shadow-lg text-center">
-        <h1 className="text-3xl font-bold mb-4">Create Session</h1>
+      <div className="w-full max-w-lg bg-slate-800 rounded-2xl shadow-xl p-8">
+        <h1 className="game-font text-3xl mb-6 text-center">Create Session</h1>
 
-        <p className="text-slate-300 mb-2">Game Code</p>
-        <div className="text-4xl font-extrabold text-cyan-400 mb-6">
-          {gameCode}
-        </div>
+        <form onSubmit={handleCreateSession} className="space-y-4">
+          <div>
+            <label className="block mb-2">Session Title</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter session title"
+              className="w-full p-3 rounded-xl bg-slate-700 text-white outline-none border border-slate-600 focus:border-cyan-400"
+              required
+            />
+          </div>
 
-        <div className="rounded-2xl border border-slate-600 bg-slate-700/50 p-5 mb-6 text-left">
-          <p className="text-sm text-slate-300 mb-2">
-            <span className="font-semibold text-white">File:</span> {fileName}
-          </p>
-          <p className="text-sm text-slate-300 mb-2">
-            <span className="font-semibold text-white">Questions:</span> {questionCount}
-          </p>
-          <p className="text-sm text-slate-300">
-            <span className="font-semibold text-white">Time per Question:</span>{" "}
-            {timePerQuestion}s
-          </p>
-        </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-cyan-500 hover:bg-cyan-400 disabled:bg-cyan-700 text-slate-900 font-bold py-3 rounded-xl transition"
+          >
+            {loading ? "Creating..." : "Create Session"}
+          </button>
 
-        {error && (
-          <p className="text-red-400 mb-4 break-words">{error}</p>
-        )}
-
-        {success && (
-          <p className="text-green-400 mb-4 break-words">{success}</p>
-        )}
-
-        <button
-          onClick={handleCreateSession}
-          disabled={isCreating}
-          className={`w-full py-3 rounded-xl font-bold transition ${
-            isCreating
-              ? "bg-slate-600 text-slate-300 cursor-not-allowed"
-              : "bg-cyan-500 hover:bg-cyan-400 text-slate-900"
-          }`}
-        >
-          {isCreating ? "Creating..." : "Create Session"}
-        </button>
+          {message && (
+            <p className="text-sm text-slate-300 text-center">{message}</p>
+          )}
+        </form>
       </div>
     </div>
   );

@@ -2,7 +2,16 @@ import { Link } from "react-router-dom";
 
 function Home() {
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-6">
+    <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-6 relative">
+      {/* Top left login icon */}
+      <Link
+        to="/instructor/login"
+        className="absolute top-4 left-4 bg-slate-800 hover:bg-slate-700 transition rounded-xl p-3 shadow-lg border border-slate-600"
+        aria-label="Go to instructor login"
+      >
+        <span className="text-xl">👤</span>
+      </Link>
+
       <div className="w-full max-w-3xl text-center">
         <h1 className="game-font text-5xl md:text-7xl text-yellow-300 mb-6">
           Quiz Play

@@ -4,6 +4,29 @@ import { useLocation, useNavigate } from "react-router-dom";
 function QuestionsPreview() {
   const navigate = useNavigate();
   const { state } = useLocation();
+  const gameCode = state?.gameCode ?? "";
+  const raw = gameCode
+    ? localStorage.getItem(`quizplay_session_${gameCode}`)
+    : null;
+  const session = raw ? JSON.parse(raw) : null;
+  const questionsByDifficulty = session?.questionsByDifficulty ?? {
+    easy: [],
+    medium: [],
+    hard: [],
+  };
+  const tabs = [
+    { key: "easy", label: "Easy" },
+    { key: "medium", label: "Medium" },
+    { key: "hard", label: "Hard" },
+  ];
+  const [difficulty, setDifficulty] = useState("easy");
+  const list = questionsByDifficulty[difficulty] ?? [];
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const safeSelectedIndex = useMemo(() => {
+    if (!list.length) return 0;
+    return Math.min(selectedIndex, list.length - 1);
+  }, [list.length, selectedIndex]);
+  const currentSafe = list[safeSelectedIndex];
 
   if (!state?.gameCode) {
     return (
@@ -21,37 +44,6 @@ function QuestionsPreview() {
       </div>
     );
   }
-
-  const gameCode = state.gameCode;
-
-  const raw = localStorage.getItem(`quizplay_session_${gameCode}`);
-  const session = raw ? JSON.parse(raw) : null;
-
-  const questionsByDifficulty = session?.questionsByDifficulty ?? {
-    easy: [],
-    medium: [],
-    hard: [],
-  };
-
-  const [difficulty, setDifficulty] = useState("easy");
-  const list = questionsByDifficulty[difficulty] ?? [];
-
-  const [selectedIndex, setSelectedIndex] = useState(0);
-  const current = list[selectedIndex];
-
-  const tabs = [
-    { key: "easy", label: "Easy" },
-    { key: "medium", label: "Medium" },
-    { key: "hard", label: "Hard" },
-  ];
-
-  // When switching difficulty, reset question selection
-  const safeSelectedIndex = useMemo(() => {
-    if (!list.length) return 0;
-    return Math.min(selectedIndex, list.length - 1);
-  }, [list.length, selectedIndex]);
-
-  const currentSafe = list[safeSelectedIndex];
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">

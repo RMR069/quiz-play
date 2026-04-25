@@ -9,144 +9,122 @@ function JoinGame() {
 
   const [studentName, setStudentName] = useState("");
   const [gameCode, setGameCode] = useState("");
-
-  const [nameError, setNameError] = useState("");
-  const [codeError, setCodeError] = useState("");
-  const [joinError, setJoinError] = useState("");
-  const [isJoining, setIsJoining] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const codeFromUrl = searchParams.get("code");
+    const codeFromUrl = searchParams.get("code")?.trim().toUpperCase() || "";
+
     if (codeFromUrl) {
       setGameCode(codeFromUrl);
     }
   }, [searchParams]);
 
-  async function handleJoin() {
-    let hasError = false;
+  const handleJoin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    setNameError("");
-    setCodeError("");
-    setJoinError("");
+    const trimmedName = studentName.trim();
+    const trimmedCode = gameCode.trim().toUpperCase();
 
-    const name = studentName.trim();
-    const code = gameCode.trim();
-
-    if (!name) {
-      setNameError("Please enter your name.");
-      hasError = true;
+    if (!trimmedName) {
+      setError("Please enter your name.");
+      setLoading(false);
+      return;
     }
 
-    if (!code) {
-      setCodeError("Please enter the game code.");
-      hasError = true;
+    if (!trimmedCode) {
+      setError("Please enter the game code.");
+      setLoading(false);
+      return;
     }
-
-    if (hasError) return;
 
     try {
-      setIsJoining(true);
-
-      const sessionRef = doc(db, "sessions", code);
+      const sessionRef = doc(db, "sessions", trimmedCode);
       const sessionSnap = await getDoc(sessionRef);
 
       if (!sessionSnap.exists()) {
-        setJoinError("Session not found. Please check the game code.");
+        setError("Session not found. Check the game code.");
+        setLoading(false);
         return;
       }
 
       const sessionData = sessionSnap.data();
-      const players = Array.isArray(sessionData.players) ? sessionData.players : [];
+      const currentPlayers = Array.isArray(sessionData.players)
+        ? sessionData.players
+        : [];
 
-      const alreadyExists = players.some(
-        (player) => player.toLowerCase() === name.toLowerCase()
+      const alreadyJoined = currentPlayers.some(
+        (player) =>
+          player.name?.trim().toLowerCase() === trimmedName.toLowerCase()
       );
 
-      if (!alreadyExists) {
+      if (!alreadyJoined) {
         await updateDoc(sessionRef, {
-          players: arrayUnion(name),
+          players: arrayUnion({
+            name: trimmedName,
+            joinedAt: Date.now(),
+          }),
         });
       }
 
       navigate("/student/lobby", {
-        state: { studentName: name, gameCode: code },
+        state: {
+          studentName: trimmedName,
+          gameCode: trimmedCode,
+        },
       });
-    } catch (error) {
-      console.error("Error joining session:", error);
-      setJoinError("Failed to join session. Please try again.");
+    } catch (err) {
+      console.error("Join session error:", err);
+      setError("Failed to join session. Please try again.");
     } finally {
-      setIsJoining(false);
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-md bg-slate-800 border border-slate-600 rounded-2xl shadow-xl p-8">
-        <h1 className="game-font text-3xl text-cyan-300 text-center mb-6">
-          Join Game
-        </h1>
+      <div className="w-full max-w-md bg-slate-800 rounded-2xl p-8 shadow-xl">
+        <h1 className="game-font text-3xl text-center mb-6">Join Game</h1>
 
-        <p className="text-slate-300 text-center mb-8">
-          Enter your name and the game code to join the live quiz.
-        </p>
+        <form onSubmit={handleJoin} className="space-y-4">
+          <div>
+            <label className="block mb-2">Your Name</label>
+            <input
+              type="text"
+              value={studentName}
+              onChange={(e) => setStudentName(e.target.value)}
+              placeholder="Enter your name"
+              className="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 outline-none focus:border-cyan-400"
+              required
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 text-sm text-slate-300">
-            Student Name
-          </label>
-          <input
-            type="text"
-            placeholder="Enter your name"
-            value={studentName}
-            onChange={(e) => {
-              setStudentName(e.target.value);
-              if (nameError) setNameError("");
-              if (joinError) setJoinError("");
-            }}
-            className={`w-full px-4 py-3 rounded-xl bg-slate-700 border text-white outline-none focus:ring-2 ${
-              nameError
-                ? "border-red-400 focus:ring-red-400"
-                : "border-slate-500 focus:ring-cyan-400"
-            }`}
-          />
-          {nameError && <p className="mt-2 text-sm text-red-400">{nameError}</p>}
-        </div>
+          <div>
+            <label className="block mb-2">Game Code</label>
+            <input
+              type="text"
+              value={gameCode}
+              onChange={(e) => setGameCode(e.target.value.toUpperCase())}
+              placeholder="Enter game code"
+              className="w-full p-3 rounded-xl bg-slate-700 border border-slate-600 outline-none focus:border-cyan-400 uppercase"
+              required
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 text-sm text-slate-300">Game Code</label>
-          <input
-            type="text"
-            placeholder="Enter game code"
-            value={gameCode}
-            onChange={(e) => {
-              setGameCode(e.target.value);
-              if (codeError) setCodeError("");
-              if (joinError) setJoinError("");
-            }}
-            className={`w-full px-4 py-3 rounded-xl bg-slate-700 border text-white outline-none focus:ring-2 ${
-              codeError
-                ? "border-red-400 focus:ring-red-400"
-                : "border-slate-500 focus:ring-cyan-400"
-            }`}
-          />
-          {codeError && <p className="mt-2 text-sm text-red-400">{codeError}</p>}
-        </div>
+          {error && (
+            <p className="text-red-400 text-sm font-medium">{error}</p>
+          )}
 
-        {joinError && (
-          <p className="mb-4 text-sm text-red-400 text-center">{joinError}</p>
-        )}
-
-        <button
-          onClick={handleJoin}
-          disabled={isJoining}
-          className={`w-full game-font py-3 rounded-xl transition ${
-            isJoining
-              ? "bg-slate-600 text-slate-300 cursor-not-allowed"
-              : "bg-cyan-500 hover:bg-cyan-400 text-slate-900"
-          }`}
-        >
-          {isJoining ? "Joining..." : "Join"}
-        </button>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-cyan-500 hover:bg-cyan-400 disabled:bg-cyan-700 text-slate-900 font-bold py-3 rounded-xl transition"
+          >
+            {loading ? "Joining..." : "Join"}
+          </button>
+        </form>
       </div>
     </div>
   );
