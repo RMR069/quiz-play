@@ -69,6 +69,25 @@ function JoinGame() {
         });
       }
 
+      const nextPlayers = alreadyJoined
+        ? currentPlayers
+        : [
+            ...currentPlayers,
+            {
+              name: trimmedName,
+              joinedAt: Date.now(),
+            },
+          ];
+
+      localStorage.setItem(
+        `quizplay_session_${trimmedCode}`,
+        JSON.stringify({
+          ...sessionData,
+          gameCode: trimmedCode,
+          players: nextPlayers,
+        })
+      );
+
       navigate("/student/lobby", {
         state: {
           studentName: trimmedName,
